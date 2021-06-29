@@ -4,17 +4,20 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Created by Artem Kropotov on 17.05.2021
  */
 public class ClientHandler {
+    private static final Logger adminlog = Logger.getLogger("admin");
 
     private Socket socket;
     private DataOutputStream out;
     private DataInputStream in;
     private ServerChat serverChat;
-    private AuthService<User> authService = DBAuthService.getInstance();
+    private AuthService<User> authService = ListAuthService.getInstance();
     private User user;
 
     public ClientHandler(Socket socket, ServerChat serverChat) {
@@ -39,6 +42,7 @@ public class ClientHandler {
                                 break;
                             } else {
                                 sendMessage("/authfail");
+                                adminlog.log(Level.WARNING, "Аутентификация не прошла");
                             }
                             // /register login nickname password
                         } else if (msg.startsWith("/register ")) {
@@ -52,6 +56,7 @@ public class ClientHandler {
                                 break;
                             } else {
                                 sendMessage("/regfail");
+                                adminlog.log(Level.WARNING, "Регистрация не прошла");
                             }
                         }
                     }
@@ -71,6 +76,7 @@ public class ClientHandler {
                             if (msg.equals("/del")) {
                                 authService.remove(user);
                                 sendMessage("/end");
+                                adminlog.log(Level.INFO, "Клиент " + user.getLogin() + " удалился");
                                 break;
                             }
                         } else {
@@ -81,6 +87,7 @@ public class ClientHandler {
                     e.printStackTrace();
                 } finally {
                     System.out.println("Клиент отключился");
+                    adminlog.log(Level.INFO, "Клиент " + user.getLogin() + " отключился");
                     disconnect();
                 }
             }).start();
